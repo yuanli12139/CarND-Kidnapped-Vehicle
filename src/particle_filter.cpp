@@ -42,6 +42,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		p.weight = 1.0;
 
 		particles.push_back[p];
+		weights.push_back[p.weight];
 	}	
 
 	is_initialized = true;
@@ -155,6 +156,7 @@ cout << "observations_map_size:" << observations_map.size() << endl;
 			double weight = 1/(2*M_PI*std_x*std_y) * exp(-((pp_x - ob.x)*(pp_x - ob.x)/(2*std_x*std_x) + (pp_y - ob.y)*(pp_y - ob.y)/(2*std_y*std_y)));
 			particles[i].weight *= weight;
 		}
+		weights[i] = particle[i].weight;
 	}
 }
 
@@ -162,7 +164,16 @@ void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+	default_random_engine gen;
+	discrete_distribution<int> dist_id(weights.begin(), weights.end());
 
+	vector<Particle> new_particles;
+	for (int i = 0; i < num_particles; ++i) {
+		int id = dist_id(gen); //generate [0, ..., num_particles - 1] with the frequence according to its weight
+		new_particles.push_back(particles[ind]);
+	}
+
+	particles = new_particles;
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
