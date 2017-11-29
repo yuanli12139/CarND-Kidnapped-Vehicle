@@ -114,7 +114,48 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
-	
+	for (int i = 0; i < num_particles; ++i) {
+		//find landmarks within the sensor range
+		vector<LandmarkObs> predicted;
+		for (int j = 0; j < map_landmarks.landmarks_list.size(); ++j) {
+			float l_id = map_landmarks.landmarks_list[j].id_i;
+			float l_x = map_landmarks.landmarks_list[j].x_f;
+			float l_y = map_landmarks.landmarks_list[j].y_f;
+
+			if (dist(particles[i].x, particles[i].y, l_x, l_y) <= sensor_range)
+				predicted.push_back(LandmarkObs{ l_id, l_x, l_y });
+		}
+
+		//transform observations in the car coordinates into the map coordinates
+		vector<LandmarkObs> observations_map;
+		for (int k = 0; k < observations.size(); ++k) {
+			double x_map = particles[i].x + (cos(particles[i].theta) * observations[k].x) 
+							- (sin(particles[i].theta) * observations[k].y);
+			double y_map = particles[i].y + (sin(particles[i].theta) * observations[k].x) 
+							+ (cos(particles[i].theta) * observations[k].y);
+			observations_map.push_back(LandmarkObs{ observations[k].id, x_map, y_map});
+		}
+
+		//data association: make the particle's predictions and obvervations both in the map coordincates
+		dataAssociation(predicted, observations_map);
+
+		//update the weight for the particle's predictions: 
+		//multiplication of all probabilties of the particle's predictions to each observations
+cout << "predicted_size: " << predicted.size() << endl;
+cout << "observations_map_size:" << observations_map.size() << endl;
+
+		double pp_x, pp_y;
+		for (auto ob : observations_map) {
+			for (auto pp : predicted {
+				if (pp.id == ob.id) {
+					pp_x = pp.x;
+					pp_y = pp.y;
+				}
+			}
+			double weight = 1/(2*M_PI*std_x*std_y) * exp(-((pp_x - ob.x)*(pp_x - ob.x)/(2*std_x*std_x) + (pp_y - ob.y)*(pp_y - ob.y)/(2*std_y*std_y)));
+			particles[i].weight *= weight;
+		}
+	}
 }
 
 void ParticleFilter::resample() {
