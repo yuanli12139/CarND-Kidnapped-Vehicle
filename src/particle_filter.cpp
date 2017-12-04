@@ -24,7 +24,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	num_particles = 1000;
+	num_particles = 200;
 
 	default_random_engine gen;
 	double std_x = std[0], std_y = std[1], std_theta = std[2];
@@ -133,7 +133,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 							- (sin(particles[i].theta) * observations[k].y);
 			double y_map = particles[i].y + (sin(particles[i].theta) * observations[k].x) 
 							+ (cos(particles[i].theta) * observations[k].y);
-			observations_map.push_back(LandmarkObs{ observations[k].id, x_map, y_map});
+			observations_map.push_back(LandmarkObs{ observations[k].id, x_map, y_map });
 		}
 
 		//data association: make the particle's predictions and obvervations both in the map coordincates
@@ -169,7 +169,7 @@ void ParticleFilter::resample() {
 
 	vector<Particle> new_particles;
 	for (int i = 0; i < num_particles; ++i) {
-		int id = dist_id(gen); //generate [0, ..., num_particles - 1] with the frequence according to its weight
+		int id = dist_id(gen); //generate [0, ..., num_particles - 1] with the frequency according to its weight
 		new_particles.push_back(particles[id]);
 	}
 
