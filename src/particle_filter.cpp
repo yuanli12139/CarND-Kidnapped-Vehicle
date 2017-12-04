@@ -24,7 +24,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	num_particles = 200;
+	num_particles = 120;
 
 	default_random_engine gen;
 	double std_x = std[0], std_y = std[1], std_theta = std[2];
@@ -129,10 +129,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		//transform observations in the car coordinates into the map coordinates
 		vector<LandmarkObs> observations_map;
 		for (int k = 0; k < observations.size(); ++k) {
-			double x_map = particles[i].x + (cos(particles[i].theta) * observations[k].x) 
-							- (sin(particles[i].theta) * observations[k].y);
-			double y_map = particles[i].y + (sin(particles[i].theta) * observations[k].x) 
-							+ (cos(particles[i].theta) * observations[k].y);
+			double x_map = particles[i].x + cos(particles[i].theta) * observations[k].x 
+							- sin(particles[i].theta) * observations[k].y;
+			double y_map = particles[i].y + sin(particles[i].theta) * observations[k].x 
+							+ cos(particles[i].theta) * observations[k].y;
 			observations_map.push_back(LandmarkObs{ observations[k].id, x_map, y_map });
 		}
 
@@ -141,9 +141,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 		//update the weight for the particle's predictions: 
 		//multiplication of all probabilties of the particle's predictions to each observations
-cout << "predicted_size: " << predicted.size() << endl;
-cout << "observations_map_size:" << observations_map.size() << endl;
+// cout << "predicted_size: " << predicted.size() << endl;
+// cout << "observations_map_size:" << observations_map.size() << endl;
 		double pp_x, pp_y;
+		double weight = 1.0;
+		double std_x = std_landmark[0], std_y = std_landmark[1];
 		for (auto ob : observations_map) {
 			for (auto pp : predicted) {
 				if (pp.id == ob.id) {
@@ -152,11 +154,10 @@ cout << "observations_map_size:" << observations_map.size() << endl;
 				}
 			}
 
-			double std_x = std_landmark[0], std_y = std_landmark[1];
-			double weight = 1/(2*M_PI*std_x*std_y) * exp(-((pp_x - ob.x)*(pp_x - ob.x)/(2*std_x*std_x) + (pp_y - ob.y)*(pp_y - ob.y)/(2*std_y*std_y)));
-			particles[i].weight *= weight;
+			weight *= 1/(2*M_PI*std_x*std_y) * exp(-((pp_x - ob.x)*(pp_x - ob.x)/(2*std_x*std_x) + (pp_y - ob.y)*(pp_y - ob.y)/(2*std_y*std_y)));
 		}
-		weights[i] = particles[i].weight;
+		particles[i].weight = weight;
+		weights[i] = weight;
 	}
 }
 
